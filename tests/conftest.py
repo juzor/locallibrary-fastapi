@@ -75,11 +75,9 @@ def test_book(test_author, session):
     return book
 
 @pytest.fixture()
-def test_genre(session):
-    genre = Genre(name='Test Genre')
-    session.add(genre)
-    session.commit()
-    return genre
-
+def test_roles(session):
+    Role.insert_roles(session)
+    roles = session.scalars(sa.select(Role).order_by(Role.name.asc())).all()
+    return roles
 
     

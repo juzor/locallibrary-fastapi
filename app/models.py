@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 from enum import Enum
 import sqlalchemy as sa
 import sqlalchemy.orm as so
-from .database import Model
+from .database import Model, Session
 
 
 class Permission:
@@ -159,3 +159,95 @@ class Genre(Model):
             'name' : self.name,
         }
     
+class User(Model):
+    __tablename__ = 'users'
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(64), unique=True)
+    email: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True)
+    password: so.Mapped[str] = so.mapped_column(sa.String(32))
+
+    role_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey('roles.id'))
+    role: so.Mapped['Role'] = so.relationship(back_populates='users')
+
+    def __repr__(self):
+        return f'User({self.id}, "{self.name}")'
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'role': self.role
+        }
+    
+    def can(self, perm):
+        return self.role is not None and self.role.has_permission(perm)
+    
+    def is_admin(self):
+        return self.can(Permission.ADMIN)
+    
+class Role(Model):
+    __tablename__ = 'roles'
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(64), unique=True)
+    default: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=False, index=True)
+    permissions: so.Mapped[int] = so.mapped_column(sa.Integer)
+
+    users: so.Mapped[list['User']] = so.relationship(back_populates='role')
+
+    def __repr__(self):
+        return f'Role({self.id}, "{self.name}")'
+    
+    def __init__(self, **kwargs):
+        super(Role, self).__init__(**kwargs)
+        if self.permissions is None:
+            self.permissions = 0
+
+    @staticmethod
+    def insert_roles(session):
+        roles = {
+            'Patron': [Permission.BORROW, Permission.RENEW, Permission.RETURN, 
+                        Permission.PAY_FINES, Permission.RESERVE],
+            'Librarian': [Permission.BORROW, Permission.RENEW, Permission.RETURN, 
+                            Permission.PAY_FINES, Permission.RESERVE, Permission.ADD_NEW_BOOK, 
+                            Permission.REMOVE_BOOK],
+            'Admin': [Permission.BORROW, Permission.RENEW, Permission.RETURN, 
+                            Permission.PAY_FINES, Permission.RESERVE, Permission.ADD_NEW_BOOK, 
+                            Permission.REMOVE_BOOK, Permission.SUSPEND_USER, Permission.ADMIN]
+        }
+        default_role = 'Patron'
+        for r in roles:
+            role = session.scalar(sa.select(Role).where(Role.name == r))
+            if role is None:
+                role = Role(name=r)
+            role.reset_permissions()
+            for perm in roles[r]:
+                role.add_permission(perm)
+            role.default = (role.name == default_role)
+            session.add(role)
+        session.commit()
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'default': self.default,
+            'permissions': self.permissions,
+            'users': [user.to_dict() for user in self.users]
+        }
+    
+    def add_permission(self, perm):
+        if not self.has_permission(perm):
+            self.permissions += perm 
+
+    def remove_permission(self, perm):
+        if self.has_permission(perm):
+            self.permissions -= perm 
+
+    def reset_permissions(self):
+        self.permissions = 0
+
+    def has_permission(self, perm):
+        return self.permissions & perm == perm

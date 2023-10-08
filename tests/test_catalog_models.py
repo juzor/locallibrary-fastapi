@@ -18,15 +18,18 @@ def test_book_instance(session, test_book, test_author):
         assert instance.book == test_book
         assert instance.book.author == test_author
 
-def test_book_genre(session, test_genre, test_book):
-    # scalar returns the first value of the first row or None if the query has no result
-    book = session.scalar(sa.select(Book).where(Book.title == test_book.title)) 
-    book.genres.append(test_genre)
+def test_book_genre(session, test_book):
+    book = session.scalar(sa.select(Book).where(Book.title == test_book.title))
+    genre = Genre(name='Test Genre')
+    genre.books.append(book)
+    session.add(genre)
     session.commit()
 
-    genre = session.scalar(sa.select(Genre).where(Genre.name == test_genre.name))
-    assert book.genres[0].name == genre.name
-    assert book.genres[0].id == genre.id
+    assert book != None
+    assert genre != None
+    assert book.title == test_book.title
+    assert book.genres[0] == genre
+    
 
 def test_book_lang(session, test_book):
     lang = Language(name="English")

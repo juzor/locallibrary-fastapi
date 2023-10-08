@@ -1,4 +1,5 @@
 import os
+from .config import settings
 from dotenv import load_dotenv
 import sqlalchemy as sa
 import sqlalchemy.orm as so
@@ -14,9 +15,11 @@ class Model(so.DeclarativeBase):
     })
 
 
-load_dotenv()
+# load_dotenv()
 
-engine = sa.create_engine(os.environ['DATABASE_URL'])
+DATABASE_URL = f"postgresql+psycopg2://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}"
+
+engine = sa.create_engine(DATABASE_URL)
 Session = so.sessionmaker(engine)
 
 def get_db():

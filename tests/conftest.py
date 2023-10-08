@@ -1,6 +1,7 @@
 import os
 import pytest
 import random
+from app.config import settings
 from app.main import app
 from dotenv import load_dotenv
 import sqlalchemy as sa
@@ -10,9 +11,11 @@ from app.models import *
 from faker import Faker
 from fastapi.testclient import TestClient
 
-load_dotenv()
+# load_dotenv()
 
-engine = sa.create_engine(os.environ['DATABASE_URL']+'_test')
+DATABASE_URL = f"postgresql+psycopg2://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}"+"_test"
+
+engine = sa.create_engine(DATABASE_URL)
 TestSession = so.sessionmaker(engine)
 
 fake = Faker()

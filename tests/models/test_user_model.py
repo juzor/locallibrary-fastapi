@@ -19,7 +19,7 @@ def test_user_is_patron(session, test_roles):
         name='Fimba Limba',
         password='wakanda',
         email='fimba.limba@email.com',
-        role=test_roles[2]
+        role= test_roles['Patron']
     )
     session.add(user)
     session.commit()
@@ -36,13 +36,14 @@ def test_user_is_patron(session, test_roles):
     assert u.can(Permission.RESERVE)
     assert not u.can(Permission.ADD_NEW_BOOK)
     assert not u.can(Permission.REMOVE_BOOK)
+    assert not u.is_admin()
 
 def test_user_is_librarian(session, test_roles):
     u = User(
         name='Da Librarian',
         password='wakanda',
         email='lbrarian@email.com',
-        role=test_roles[1]
+        role=test_roles['Librarian']
     )
     session.add(u)
     session.commit()
@@ -57,13 +58,14 @@ def test_user_is_librarian(session, test_roles):
     assert u.can(Permission.RESERVE)
     assert u.can(Permission.ADD_NEW_BOOK)
     assert u.can(Permission.REMOVE_BOOK)
+    assert not u.is_admin()
 
 def test_user_is_admin(session, test_roles):
     u = User(
         name='Admin Dada',
         password='wakanda',
         email='admin@email.com',
-        role=test_roles[0]
+        role=test_roles["Admin"]
     )
     session.add(u)
     session.commit()
@@ -80,4 +82,5 @@ def test_user_is_admin(session, test_roles):
     assert u.can(Permission.REMOVE_BOOK)
     assert u.can(Permission.SUSPEND_USER)
     assert u.can(Permission.ADMIN)
+    assert u.is_admin()
 

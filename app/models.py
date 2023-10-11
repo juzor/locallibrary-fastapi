@@ -1,11 +1,10 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 from enum import Enum
 import sqlalchemy as sa
 import sqlalchemy.orm as so
-from .database import Model, Session
-
+from .database import Model, Session, get_db
 
 class Permission:
     # patron
@@ -165,10 +164,11 @@ class User(Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(64), unique=True)
     email: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True)
-    password: so.Mapped[str] = so.mapped_column(sa.String(32))
+    password: so.Mapped[str] = so.mapped_column(sa.String)
+    active: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=True)
 
-    role_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey('roles.id'))
-    role: so.Mapped['Role'] = so.relationship(back_populates='users')
+    role_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey('roles.id'))
+    role: so.Mapped[Optional['Role']] = so.relationship(back_populates='users')
 
     def __repr__(self):
         return f'User({self.id}, "{self.name}")'
@@ -178,7 +178,8 @@ class User(Model):
             'id': self.id,
             'name': self.name,
             'email': self.email,
-            'role': self.role
+            'active': self.active,
+            'role': self.role.name
         }
     
     def can(self, perm):
@@ -186,6 +187,10 @@ class User(Model):
     
     def is_admin(self):
         return self.can(Permission.ADMIN)
+    
+    def is_librarian(self):
+        return self.can(Permission.REMOVE_BOOK)
+    
     
 class Role(Model):
     __tablename__ = 'roles'

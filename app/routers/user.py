@@ -58,7 +58,7 @@ def get_users(current_user: models.User = Depends(oauth2.get_current_user), db: 
     return [{**user[0].to_dict()} for user in users]
 
 @router.put('/{id}', response_model=schemas.UserOut)
-def toggle_user(id: int, current_user: models.User = Depends(oauth2.get_current_user), db: so.Session=Depends(database.get_db)):
+def toggle_user_access(id: int, current_user: models.User = Depends(oauth2.get_current_user), db: so.Session=Depends(database.get_db)):
     if current_user.role.name != "Admin":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -32,6 +32,11 @@ BookGenre = sa.Table(
     sa.Column('genre_id', sa.ForeignKey('genres.id'), primary_key=True, nullable=False)
 )
 
+class Updateable:
+    def update(self, data):
+        for attr, value in data:
+            setattr(self, attr, value)
+
 class Language(Model):
     __tablename__ = 'languages'
 
@@ -49,7 +54,7 @@ class Language(Model):
             'name' : self.name
         }
 
-class Author(Model):
+class Author(Updateable, Model):
     __tablename__ = 'authors'
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
@@ -67,10 +72,13 @@ class Author(Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'name' : self.name
+            'name' : self.name,
+            'date_of_birth': self.date_of_birth,
+            'date_of_death': self.date_of_death,
+            'books':[book.to_dict() for book in self.books]
         }
     
-class Book(Model):
+class Book(Updateable, Model):
     __tablename__ = 'books'
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
@@ -86,7 +94,7 @@ class Book(Model):
     )
 
     book_instances: so.Mapped[list['BookInstance']] = so.relationship(
-        cascade='all, delete', back_populates='book'
+        cascade='all, delete-orphan', back_populates='book'
     )
 
     genres: so.Mapped[list['Genre']] = so.relationship(
@@ -106,7 +114,10 @@ class Book(Model):
             'title' : self.title,
             'summary' : self.summary,
             'isbn' : self.isbn,
-            'author': self.author.to_dict()
+            'img_url': self.img_url,
+            'author': self.author.name,
+            #'language': self.language.name,
+            'book_instances': [book_instance.to_dict() for book_instance in self.book_instances]
         }
     
 class BookInstance(Model):
@@ -135,8 +146,10 @@ class BookInstance(Model):
     def to_dict(self):
         return {
             'id' : self.id.hex,
+            'book_id': self.book_id,
             'imprint' : self.imprint,
-            'due_date' : self.due_date
+            'due_date' : self.due_date,
+            'status' : self.status
         }
     
 class Genre(Model):
@@ -190,8 +203,7 @@ class User(Model):
     
     def is_librarian(self):
         return self.can(Permission.REMOVE_BOOK)
-    
-    
+        
 class Role(Model):
     __tablename__ = 'roles'
 

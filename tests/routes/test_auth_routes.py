@@ -8,9 +8,10 @@ def test_login_route(client, test_user):
         "/login",
         data={
             "username": test_user['email'],
-            "password": test_user['password']
+            "password": 'password01'
         }
     )
+    
     login_res = schemas.Token(**res.json())
     payload = jwt.decode(
         login_res.access_token,

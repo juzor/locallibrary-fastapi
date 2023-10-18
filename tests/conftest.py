@@ -57,10 +57,20 @@ def test_author(session):
     author = Author(name='Samanosuke Akechi')
     session.add(author)
     session.commit()
+    session.refresh(author)
     return author
 
 @pytest.fixture()
+def test_language(session):
+    lang = Language(name="English")
+    session.add(lang)
+    session.commit()
+    session.refresh(lang)
+    return lang
+
+@pytest.fixture()
 def test_book(test_author, session):
+    
     book = Book(
         title = fake.sentence(nb_words=5),
         summary = fake.sentence(nb_words=50),

@@ -68,6 +68,9 @@ def main():
                                 imprint=row['publisher'],
                                 status=random.choice(list(StatusEnum))
                             )
+                            if bk.status == StatusEnum.ON_LOAN:
+                                bk.due_date = datetime.now() + timedelta(days=random.randint(1, 30))
+                                bk.user_id = random.choice([12, 13])
                             book.book_instances.append(bk)
 
                         if languages not in all_languages and languages != "":

@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import UUID4, BaseModel, EmailStr
 from app import models
 
 class Token(BaseModel):
@@ -37,16 +37,17 @@ class BookOut(BookBase):
     id: int
 
 class BookInstanceOut(BaseModel):
-    id: Optional[str] = None
+    id: Optional[UUID4] = None
     book_id: Optional[int] = None
     imprint: Optional[str] = None
     due_date: Optional[datetime] = None
     status: Optional[models.StatusEnum] = None
+    user_id: Optional[int]
 
 class BookDetailOut(BookOut):
     summary: str
     isbn: str
-    img_url: str
+    img_url: Optional[str]
     language: Optional[str] = None
     book_instances: List[BookInstanceOut]
 
@@ -82,3 +83,15 @@ class BookUpdate(BaseModel):
     summary: Optional[str] = None
     isbn: Optional[str] = None
     img_url: Optional[str] = None
+
+class GenreBase(BaseModel):
+    name: str
+
+class GenreOut(GenreBase):
+    id: int
+
+class GenreCreate(GenreBase):
+    pass
+
+class GenreDetailOut(GenreOut):
+    books: Optional[List[BookOut]]

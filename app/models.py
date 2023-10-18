@@ -131,9 +131,14 @@ class BookInstance(Model):
         sa.Enum(StatusEnum), 
         default=StatusEnum.MAINTENANCE
     )
+    user_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey('users.id'), index=True)
 
     book: so.Mapped['Book'] = so.relationship(
         lazy='joined', innerjoin=True, back_populates='book_instances'
+    )
+
+    user: so.Mapped[Optional['User']] = so.relationship(
+        back_populates='book_instances'
     )
 
     def __repr__(self):
@@ -145,14 +150,15 @@ class BookInstance(Model):
     
     def to_dict(self):
         return {
-            'id' : self.id.hex,
+            'id' : self.id,
             'book_id': self.book_id,
             'imprint' : self.imprint,
             'due_date' : self.due_date,
-            'status' : self.status
+            'status' : self.status,
+            'user_id': self.user_id
         }
     
-class Genre(Model):
+class Genre(Updateable, Model):
     __tablename__ = 'genres'
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
@@ -169,6 +175,7 @@ class Genre(Model):
         return {
             'id' : self.id,
             'name' : self.name,
+            'books': [book.to_dict() for book in self.books]
         }
     
 class User(Model):
@@ -182,6 +189,7 @@ class User(Model):
 
     role_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey('roles.id'))
     role: so.Mapped[Optional['Role']] = so.relationship(back_populates='users')
+    book_instances: so.Mapped[Optional[list['BookInstance']]] = so.relationship(back_populates='user')
 
     def __repr__(self):
         return f'User({self.id}, "{self.name}")'

@@ -96,3 +96,15 @@ class GenreCreate(GenreBase):
 
 class GenreDetailOut(GenreOut):
     books: Optional[List[BookOut]]
+
+class LangBase(BaseModel):
+    name: str
+
+class LangOut(LangBase):
+    id: int
+
+class LangCreate(LangBase):
+    pass
+
+class LangDetailOut(LangOut):
+    books: Optional[List[BookOut]]

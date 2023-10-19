@@ -5,19 +5,23 @@ def test_create_valid_book(authorised_client, test_author, test_language):
     res = authorised_client.post(
         "/books/",
         json={
-            "title": "Testing new book",
+            "title": "Alogbaga",
             "summary": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
             "isbn": "597-0-07-698456-5",
             "img_url": "placeholder image",
             "language_id": test_language.id,
             "author_id": test_author.id,
             "copies": 2,
-            "imprint": "leicester print"
+            "imprint": "Nwosu print",
+            "genres": [
+                "Igbo Folktale",
+                "Fantasy"
+            ]
         }
     )
     new_book = schemas.BookOut(**res.json())
     assert res.status_code == 201
-    assert new_book.title == "Testing new book"
+    assert new_book.title == "Alogbaga"
 
 
 def test_create_invalid_book(authorised_client):

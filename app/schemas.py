@@ -77,6 +77,7 @@ class BookCreate(BaseModel):
     author_id: Optional[int] = None
     copies: int
     imprint: Optional[str] = None
+    genres: Optional[List[str]] = None
 
 class BookUpdate(BaseModel):
     title: Optional[str] = None

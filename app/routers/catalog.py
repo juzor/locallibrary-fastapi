@@ -70,7 +70,15 @@ def create_book(
                 imprint = book.imprint
             )
             new_book.book_instances.append(bk)
-    db.add(new_book)
+    for genre in book.genres:
+        g = db.scalar(sa.select(models.Genre).where( models.Genre.name.ilike(f"%{genre}%")))
+        if not g:
+            g = models.Genre(
+                name = genre
+            )
+            db.add(g)
+        g.books.append(new_book)
+    #db.add(new_book)
     db.commit()
     return new_book.to_dict()
 

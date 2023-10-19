@@ -1,7 +1,7 @@
 import pytest
 from app import schemas
 
-def test_create_valid_book(authorised_client, test_author, test_language):
+def test_authorised_create_book(authorised_client, test_author, test_language):
     res = authorised_client.post(
         "/books/",
         json={
@@ -23,9 +23,8 @@ def test_create_valid_book(authorised_client, test_author, test_language):
     assert res.status_code == 201
     assert new_book.title == "Alogbaga"
 
-
-def test_create_invalid_book(authorised_client):
-        res = authorised_client.post(
+def test_unauthorised_create_book(client):
+        res = client.post(
             "/books/",
             json={
                 "title": "Testing new book",
@@ -39,7 +38,7 @@ def test_create_invalid_book(authorised_client):
             }
         )
         # bad_book = schemas.BookOut(**res.json())
-        assert res.status_code == 404
+        assert res.status_code == 401
 
 def test_get_book(authorised_client, test_book):
     res = authorised_client.get(

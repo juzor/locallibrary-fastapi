@@ -1,7 +1,7 @@
 import pytest
 from app import schemas
 
-def test_create_valid_author(authorised_client):
+def test_authorised_create_author(authorised_client):
     res = authorised_client.post(
         "/authors/",
         json={
@@ -12,8 +12,8 @@ def test_create_valid_author(authorised_client):
     assert author.name == "Foo Bar"
     assert res.status_code == 201
 
-def test_create_invalid_author(authorised_client):
-    res = authorised_client.post(
+def test_unauthorised_create_author(client):
+    res = client.post(
         "/authors/",
         json={
             "name" : "",
@@ -21,7 +21,7 @@ def test_create_invalid_author(authorised_client):
             "date_of_death": ""
         }
     )
-    assert res.status_code == 422
+    assert res.status_code == 401
 
 def test_update_author(test_author, authorised_client):
     res = authorised_client.put(

@@ -1,5 +1,5 @@
 from typing import List
-from uuid import UUID
+from fastapi import Body
 from pydantic import UUID4
 import sqlalchemy as sa
 import sqlalchemy.orm as so
@@ -8,7 +8,7 @@ from .. import models, database, schemas, utils, oauth2
 from fastapi import APIRouter, Response, status, HTTPException, Depends
 
 router = APIRouter(
-    tags=["Catalogue"]
+    tags=["Catalog"]
 )
 
 # Book CRUD operations
@@ -217,7 +217,7 @@ def get_author(id: int, db: so.Session=Depends(database.get_db)):
 
 @router.post('/authors', status_code=status.HTTP_201_CREATED, response_model=schemas.AuthorOut)
 def create_author(
-    new_author: schemas.AuthorCreate, 
+    new_author: schemas.AuthorCreate = Body(...), 
     current_user: models.User = Depends(oauth2.get_current_user), 
     db: so.Session=Depends(database.get_db)
     ):
@@ -365,5 +365,91 @@ def delete_genre(
             detail=f"No genre with id: {id}"
         )
     db.delete(genre)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.get('/languages', response_model=List[schemas.LangOut])
+def get_languages(db: so.Session=Depends(database.get_db)):
+    languages = db.scalars(sa.select(models.Language).order_by(models.Language.name)).all()
+    if not languages:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No language in the database"
+        )
+    return [{**language.to_dict()} for language in languages]
+
+@router.get('/languages/{id}', response_model=schemas.LangDetailOut)
+def get_language(id: int, db: so.Session=Depends(database.get_db)):
+    language = db.get(models.Language, id)
+    if not language:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No language with id: {id}"
+        )
+    return language.to_dict()
+
+@router.post('/languages', status_code=status.HTTP_201_CREATED, response_model=schemas.LangOut)
+def create_language(
+        new_language: schemas.LangCreate = (...),
+        current_user: models.User = Depends(oauth2.get_current_user), 
+        db: so.Session=Depends(database.get_db)
+    ):
+    if not current_user.is_librarian() and not current_user.is_admin():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorised action"
+        )
+    db_language = db.scalar(sa.select(models.Language).where(models.Language.name == new_language.name))
+    if db_language:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Language already exists"
+        )
+    language = models.Language(**new_language.model_dump())
+    db.add(language)
+    db.commit()
+    db.refresh(language)
+    return language.to_dict()
+
+@router.put('/languages/{id}', response_model=schemas.LangOut)
+def update_language(
+    id: int, 
+    updated_language: schemas.LangCreate,
+    current_user: models.User = Depends(oauth2.get_current_user), 
+    db: so.Session=Depends(database.get_db)
+    ):
+    if not current_user.is_librarian() and not current_user.is_admin():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorised action"
+        )
+    language = db.get(models.Language, id)
+    if not language:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No genre with id: {id}"
+        )
+    language.update(updated_language)
+    db.commit() 
+    return language
+
+@router.delete('/languages/{id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_language(
+    id: int,
+    current_user: models.User = Depends(oauth2.get_current_user), 
+    db: so.Session=Depends(database.get_db)
+    ):
+    if not current_user.is_librarian() and not current_user.is_admin():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorised action"
+        )
+    language = db.get(models.Language, id)
+    if not language:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No language with id: {id}"
+        )
+    db.delete(language)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

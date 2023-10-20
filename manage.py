@@ -35,5 +35,21 @@ def create_superuser(name: str, email: str, password: str):
         db.commit()
         print("Superuser created successfully!!!")
 
+@cli.command()
+def create_librarian(name: str, email: str, password: str):
+    role = db.scalars(sa.select(Role).where(Role.name == "Librarian")).first()
+    if role is None:
+        print("Please insert roles first using: 'py manage.py insert-roles")
+    else:
+        librarian = User(
+            name=name, 
+            email=email, 
+            password=hash(password),
+            role=role
+        )
+        db.add(librarian)
+        db.commit()
+        print("Librarian created successfully")
+
 if __name__ == '__main__':
     cli()

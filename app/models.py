@@ -37,13 +37,14 @@ class Updateable:
         for attr, value in data:
             setattr(self, attr, value)
 
-class Language(Model):
+class Language(Updateable, Model):
     __tablename__ = 'languages'
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(32), index=True, unique=True)
 
-    books: so.WriteOnlyMapped['Book'] = so.relationship(back_populates='language')
+    # books: so.WriteOnlyMapped['Book'] = so.relationship(back_populates='language')
+    books: so.Mapped[list['Book']] = so.relationship(back_populates='language')
 
     def __repr__(self):
         return f'Language({self.id}, "{self.name}")'
@@ -51,7 +52,8 @@ class Language(Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'name' : self.name
+            'name' : self.name,
+            'books':[book.to_dict() for book in self.books]
         }
 
 class Author(Updateable, Model):

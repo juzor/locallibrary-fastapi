@@ -163,4 +163,18 @@ def test_users(session, test_roles):
     # return users
     return [{**user[0].to_dict()} for user in users]
 
-    
+@pytest.fixture()
+def test_lang(session):
+    lang = Language(name="English")
+    session.add(lang)
+    session.commit()
+    session.refresh(lang)
+    return lang
+
+@pytest.fixture()
+def test_genre(session):
+    genre = Genre(name="Folklore")
+    session.add(genre)
+    session.commit()
+    session.refresh(genre)
+    return genre

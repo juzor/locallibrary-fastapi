@@ -33,7 +33,7 @@ def test_book_genre(session, test_book):
 
 def test_book_lang(session, test_book):
     lang = Language(name="English")
-    lang.books.add(test_book)
+    lang.books.append(test_book)
     session.add(lang)
     session.commit()
 

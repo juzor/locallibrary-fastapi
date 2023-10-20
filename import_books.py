@@ -80,7 +80,7 @@ def main():
                             all_languages[languages] = language
 
                         if languages != "":
-                            all_languages[languages].books.add(book)
+                            all_languages[languages].books.append(book)
 
                         if authors[0] not in all_authors:
                             author = Author(name=authors[0])
